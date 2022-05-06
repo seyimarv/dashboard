@@ -1,25 +1,46 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { lazy, Suspense, useEffect } from "react";
+import "./App.css";
+import GlobalStyle from "./GlobalStyle";
+import { Route, Routes } from "react-router-dom";
+import Container from "./components/Container";
+import { dataLoading, setConfiguration } from "./redux/configuration/config.action";
+import { useDispatch, useSelector } from "react-redux";
+import { getConfiguration } from "./services/configuration";
+import { RootState } from "./redux/types";
+import Typography from "./components/Typography";
+
+
+const Main = lazy(() => import("./pages/main"));
+const Product = lazy(() => import("./pages/product"));
 
 function App() {
+  const dispatch = useDispatch()
+  const {isLoading, error }= useSelector((state: RootState) => state.configuration);
+  useEffect(() => {
+     dataLoading()
+     getConfiguration(setConfiguration, dispatch)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  if(isLoading) {
+    return <Typography>Loading configuration, please wait...</Typography>
+  }
+
+  if(error) {
+    return <Typography>OOPS.... Unable to load configuration, please check your network</Typography>
+  }
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <GlobalStyle />
+      <Suspense fallback={<div>Loading...</div>}>
+        <Container>
+          <Routes>
+            <Route path="/" element={<Main />} />
+            <Route path="/Product" element={<Product />} />
+          </Routes>
+        </Container>
+      </Suspense>
+    </>
   );
 }
 
